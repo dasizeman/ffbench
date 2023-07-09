@@ -73,12 +73,19 @@ bad_tree() {
 }
 
 main() {
+    # Try once to install homebrew for the user
+    if ! check_homebrew; then
+        install_homebrew
+    fi
+
     PATH="$(check_homebrew):$PATH"
     export PATH
+
     check_xcode
     install_python
     install_python_packages
     check_mercurial
+
     ! [ -e "$MOZ_TREE_NAME" ] && ff_bootstrap
     pushd "$MOZ_TREE_NAME"
     # Remove the mozconfig which enables artifact builds by default.
