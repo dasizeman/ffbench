@@ -1,0 +1,10 @@
+{
+    "workbench.colorCustomizations": {
+        "[Solarized Light]": {
+            "editor.selectionBackground": "#f0dfb2"
+        },
+        "activityBar.background": "#04342E",
+        "titleBar.activeBackground": "#054940",
+        "titleBar.activeForeground": "#ECFEFB"
+    }
+}
