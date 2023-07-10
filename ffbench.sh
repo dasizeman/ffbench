@@ -47,7 +47,7 @@ install_python() {
 }
 
 install_python_packages() {
-    python3 -m pip install --user mercurial==6.1.4
+    python3 -m pip install mercurial==6.1.4
 }
 
 check_mercurial() {
