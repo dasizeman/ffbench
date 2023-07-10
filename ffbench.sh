@@ -40,7 +40,7 @@ check_xcode() {
     xcodebuild -runFirstLaunch
 }
 
-install_python(){
+install_python() {
     echo >&2 "Installing Homebrew Python 3..."
     brew install python@3.11
 }
