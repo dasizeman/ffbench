@@ -4,11 +4,20 @@ set -euo pipefail
 XCODE_APP_EXPECTED="/Applications/Xcode.app"
 XCODE_SELECT_EXPECTED="/Applications/Xcode.app/Contents/Developer"
 MOZ_TREE_NAME="mozilla-unified"
+BREW_PATH="/opt/homebrew/bin"
+
+install_homebrew() {
+    echo >&2 "Trying to install Homebrew..."
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    PATH="$BREW_PATH:$PATH"
+    export PATH
+    echo >&2 "Homebrew should be installed."
+}
 
 check_homebrew() {
-    if ! command -v brew; then
+    if ! command -v brew >/dev/null 2>&1; then
         echo >&2 "Homebrew not detected."
-        return 1
+        install_homebrew
     fi
 }
 
@@ -31,36 +40,40 @@ check_xcode() {
     xcodebuild -runFirstLaunch
 }
 
-install_homebrew() {
-    echo >&2 "Trying to install Homebrew..."
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    echo >&2 "Homebrew should be installed."
+install_python(){
+    echo >&2 "Installing Homebrew Python 3..."
+    brew install python@3.11
 }
 
-install_python() {
-    local whichpython
-    whichpython="$(command -v python3)" || whichpython=""
-    if ! [ "$whichpython" = "/opt/homebrew/bin/python3" ]; then
-        echo >&2 "Installing Homebrew Python 3..."
-        brew install python@3.11
+check_python() {
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo >&2 "python3 not detected."
+        install_python
     fi
 }
 
-install_python_packages() {
+install_mercurial() {
     python3 -m pip install mercurial==6.1.4
 }
 
 check_mercurial() {
     if ! hg version >/dev/null 2>&1; then
         echo >&2 "Mercurial not found or properly configured"
-        return 1
+        install_mercurial
     fi
 }
 
 ff_bootstrap() {
-    rm -rf bootstrap.py
-    curl https://hg.mozilla.org/mozilla-central/raw-file/default/python/mozboot/bin/bootstrap.py -O
-    python3 bootstrap.py --no-interactive
+    if ! [ -e "$MOZ_TREE_NAME" ]; then
+        rm -rf bootstrap.py
+        curl https://hg.mozilla.org/mozilla-central/raw-file/default/python/mozboot/bin/bootstrap.py -O
+        # Choice #2 is full build without artifacts
+        python3 bootstrap.py --no-interactive --application-choice="Firefox for Desktop"
+    else
+        pushd "$MOZ_TREE_NAME"
+        ./mach --no-interactive bootstrap --application-choice="Firefox for Desktop"
+        popd
+    fi
 }
 
 bad_tree() {
@@ -73,31 +86,18 @@ bad_tree() {
 }
 
 main() {
-    # Try once to install homebrew for the user
-    if ! check_homebrew; then
-        install_homebrew
-    fi
-
-    PATH="$(check_homebrew):$PATH"
-    export PATH
-
+    check_homebrew
     check_xcode
-    install_python
-    install_python_packages
+    check_python
     check_mercurial
 
-    ! [ -e "$MOZ_TREE_NAME" ] && ff_bootstrap
-    pushd "$MOZ_TREE_NAME"
-    # Remove the mozconfig which enables artifact builds by default.
-    # To enable them again do:
-    # cat >> $MOZ_TREE_NAME << EOF
-    # ac_add_options --enable-artifact-builds
-    # EOF
+    ff_bootstrap
     {
+        pushd "$MOZ_TREE_NAME"
         ./mach clobber
         hg up -C central
-        rm -f "mozconfig"
         time ./mach build
+        popd
     } || bad_tree
 }
 
