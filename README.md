@@ -31,3 +31,22 @@ real    12m22.663s
 user    116m19.962s
 sys     6m12.779s
 ```
+
+### MacBook Pro 14-inch, 2021
+```
+Model Name:	MacBook Pro
+Model Identifier:	MacBookPro18,4
+Model Number:	MMQX3LL/A
+Chip:	Apple M1 Max
+Total Number of Cores:	10 (8 performance and 2 efficiency)
+Memory:	64 GB
+System Firmware Version:	8422.121.1
+OS Loader Version:	8422.121.1
+Real SSD Size: 1858.68 GB
+```
+
+```
+real    15m23.770s
+user    124m18.640s
+sys     5m56.530s
+```
